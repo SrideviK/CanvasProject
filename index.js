@@ -1,3 +1,37 @@
+// 4 rows 4 cols for the sprite sheet hero-4
+const rows = 4;
+const cols = 4;
+
+// tracks which rows corresponds to which direction on sprite sheet
+let trackRight = 2;
+let trackLeft = 1;
+let trackUp = 3;
+let trackDown = 0;
+
+// calc to figure out size of a single frame
+const spriteWidth = 256;
+const spriteHeight = 256;
+let width = spriteWidth / cols;
+let height = spriteHeight / rows;
+
+// will be used to cycle throught the frames
+let curXFrame = 0; // start on left side
+let frameCount = 4; // 4 frames per row
+
+// x and y coordinates of the overall sprite image to get the single frame we want
+let srcX = 0; // our image has no borders or other stuff
+let scrY = 0;
+
+// Determines which direction character is moving
+let left = false;
+let right = false;
+let up = false;
+let down = false;
+
+// for slowing animation in update()
+let counter = 1;
+
+
 // Create the canvas
 var canvas = document.createElement("canvas");
 var ctx = canvas.getContext("2d");
@@ -25,7 +59,7 @@ var heroImage = new Image();
 heroImage.onload = function () {
     heroReady = true;
 };
-heroImage.src = "images/hero-2.png";
+heroImage.src = "images/hero-4.png";
 
 // Monster image
 var vaccineReady = false;
@@ -59,14 +93,14 @@ var hero = {
 };
 var vaccine = {
     // for this version, the monster does not move, so just and x and y
-        x: 0,
-        y: 0
-    };
-var mask = {
-        // for this version, the monster does not move, so just and x and y
-     x: 0,
+    x: 0,
     y: 0
- };
+};
+var mask = {
+    // for this version, the monster does not move, so just and x and y
+    x: 0,
+    y: 0
+};
 
 
  let virusObject = function (pX, pY) {
@@ -95,85 +129,121 @@ addEventListener("keyup", function (e) {
 }, false);
 
 function touchingVirus(who){
-
     //let gg = false;
     for(i=0;i<virusArray.length;i++){
-        if
-        (who.x<=(virusArray[i].x+50)&&
-        virusArray[i].x<=(who.x+50)&&
-        who.y<=(virusArray[i].y+50)&&
-        virusArray[i].y<=(who.y+50)
-        ) 
-            {
-                console.log("touched virus");
-        return true;
+        if( who.x<=(virusArray[i].x+50)&&
+            virusArray[i].x<=(who.x+50)&&
+            who.y<=(virusArray[i].y+50)&&
+            virusArray[i].y<=(who.y+50)) 
+        {
+            console.log("touched virus");
+            return true;
+        }
     }
-    }
-
     return false;
-    
 }
 
 // Update game objects
 var update = function (modifier) {
+    // clear the last image position and assume the character is not moving left or right
+    ctx.clearRect(hero.x, hero.y, width, height);
+    left = false;
+    right = false;
+    up = false;
+    down = false;
 
     if (38 in keysDown && hero.y > 32) { //  holding up key
         hero.y -= hero.speed * modifier;
+        up = true;
     }
     if (40 in keysDown && hero.y < canvas.height - (64 + 30)) { //  holding down key
         hero.y += hero.speed * modifier;
+        down = true;
     }
     if (37 in keysDown && hero.x > (30)) { // holding left key
         hero.x -= hero.speed * modifier;
+        left = true; // for animation
     }
     if (39 in keysDown && hero.x < canvas.width - (64 + 30)) { // holding right key
         hero.x += hero.speed * modifier;
+        right = true; // for animation
+    }
+
+    // do the frame logic here for directional movement
+    // slow down animation
+    if(counter == 6){ // adjust this to change "walking speed" of animation
+        curXFrame = ++curXFrame % frameCount; // updating the sprite frame index
+                                                // it will count 0,1,2,3... using %
+                                                // increment frame rate every 6th time to slow down animation
+        counter = 0;
+    } else {
+        counter++;
+    }
+
+    srcX = curXFrame * width; // calc the X coordinate for the spritesheet
+    // pick Y dimension of the correct row for the spritesheet
+    if(left) {
+        scrY = trackLeft * height;
+    }
+
+    if(right){
+        scrY = trackRight * height;
+    }
+
+    if(up){
+        scrY = trackUp * height;
+    }
+
+    if(down){
+        scrY = trackDown * height;
+    }
+
+    // this will pick the most neutral image when not moving
+    if(left == false && right == false && up == false && down == false){
+        srcX = 0 * width;
+        scrY = 0 * height;
     }
     
-        // Are they touching?
-        if (
-            (hero.x <= (vaccine.x + 55)
-            && vaccine.x <= (hero.x + 55)
-            && hero.y <= (vaccine.y + 55)
-            && vaccine.y <= (hero.y + 55)) ||
-            (hero.x <= (mask.x + 55)
-            && mask.x <= (hero.x + 55)
-            && hero.y <= (mask.y + 55)
-            && mask.y <= (hero.y + 55)) 
-        ) {
-            ++immunityLevel;       // keep track of our “score”
+    // Are they touching?
+    if (
+        (hero.x <= (vaccine.x + 55)
+        && vaccine.x <= (hero.x + 55)
+        && hero.y <= (vaccine.y + 55)
+        && vaccine.y <= (hero.y + 55)) ||
+        (hero.x <= (mask.x + 55)
+        && mask.x <= (hero.x + 55)
+        && hero.y <= (mask.y + 55)
+        && mask.y <= (hero.y + 55)) 
+    ) {
+        ++immunityLevel;       // keep track of our “score”
 
-            if(immunityLevel>5){
-                alert("You won!");
-                gameOver=true;
+        if(immunityLevel>5){
+            alert("You won!");
+            gameOver=true;
 
-            }
-            else{
-                reset();       // start a new cycle
-            }
-
-
-            
         }
-        let count=0;
+        else{
+            reset();       // start a new cycle
+        }
+    }
 
-        if(touchingVirus(hero)){
-            count++;
+    let count=0;
+    if(touchingVirus(hero)){
+        count++;
         //     --immunityLevel;
         //     ctx.fillStyle = "rgb(0, 0, 0)";
         // ctx.font = "24px Helvetica";
         // ctx.textAlign = "left";
         // ctx.textBaseline = "top";
         // ctx.fillText("immunity -1! 2 more chances!!" , 32, 32);
-            
-                alert("You have caught Virus! Game Over!")
-                gameOver=true;  
+        
+        alert("You have caught Virus! Game Over!")
+        gameOver=true;  
 
-            
-                 
-            //console.log("touched");
-        }
-    
+        //console.log("touched");
+    }
+    // console.log("left | right : " + left + " | " + right);
+    // console.log("up | down : " + up + " | " + down);
 };
 
 
@@ -206,8 +276,9 @@ var render = function () {
         ctx.drawImage(bgImage2, 32, 32);
 
     }
-    if (heroReady) {
-        ctx.drawImage(heroImage, hero.x, hero.y);
+
+    if(heroReady){
+        ctx.drawImage(heroImage, srcX, scrY, width, height, hero.x, hero.y, width, height);
     }
 
     if (vaccineReady) {
