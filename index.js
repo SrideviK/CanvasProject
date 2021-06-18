@@ -131,9 +131,9 @@ addEventListener("keyup", function (e) {
 function touchingVirus(who){
     //let gg = false;
     for(i=0;i<virusArray.length;i++){
-        if( who.x<=(virusArray[i].x+50)&&
-            virusArray[i].x<=(who.x+50)&&
-            who.y<=(virusArray[i].y+50)&&
+        if( who.x<=(virusArray[i].x+40)&&
+            virusArray[i].x<=(who.x+35)&&
+            who.y<=(virusArray[i].y+45)&&
             virusArray[i].y<=(who.y+50)) 
         {
             console.log("touched virus");
@@ -152,7 +152,7 @@ var update = function (modifier) {
     up = false;
     down = false;
 
-    if (38 in keysDown && hero.y > 32) { //  holding up key
+    if (38 in keysDown && hero.y > 20) { //  holding up key
         hero.y -= hero.speed * modifier;
         up = true;
     }
@@ -160,11 +160,11 @@ var update = function (modifier) {
         hero.y += hero.speed * modifier;
         down = true;
     }
-    if (37 in keysDown && hero.x > (30)) { // holding left key
+    if (37 in keysDown && hero.x > (15)) { // holding left key
         hero.x -= hero.speed * modifier;
         left = true; // for animation
     }
-    if (39 in keysDown && hero.x < canvas.width - (64 + 30)) { // holding right key
+    if (39 in keysDown && hero.x < canvas.width - (64 + 18)) { // holding right key
         hero.x += hero.speed * modifier;
         right = true; // for animation
     }
@@ -206,21 +206,22 @@ var update = function (modifier) {
     
     // Are they touching?
     if (
-        (hero.x <= (vaccine.x + 55)
-        && vaccine.x <= (hero.x + 55)
-        && hero.y <= (vaccine.y + 55)
-        && vaccine.y <= (hero.y + 55)) ||
-        (hero.x <= (mask.x + 55)
-        && mask.x <= (hero.x + 55)
-        && hero.y <= (mask.y + 55)
-        && mask.y <= (hero.y + 55)) 
+        (hero.x <= (vaccine.x + 45)
+        && vaccine.x <= (hero.x + 45)
+        && hero.y <= (vaccine.y + 45)
+        && vaccine.y <= (hero.y + 45)) ||
+        (hero.x <= (mask.x + 50)
+        && mask.x <= (hero.x + 50)
+        && hero.y <= (mask.y + 50)
+        && mask.y <= (hero.y + 50)) 
     ) {
         ++immunityLevel;       // keep track of our “score”
 
-        if(immunityLevel>5){
+        if(immunityLevel>9){
             alert("You won!");
             gameOver=true;
-
+            //clearInterval(gametimer);
+            //endGame();
         }
         else{
             reset();       // start a new cycle
@@ -229,18 +230,9 @@ var update = function (modifier) {
 
     let count=0;
     if(touchingVirus(hero)){
-        count++;
-        //     --immunityLevel;
-        //     ctx.fillStyle = "rgb(0, 0, 0)";
-        // ctx.font = "24px Helvetica";
-        // ctx.textAlign = "left";
-        // ctx.textBaseline = "top";
-        // ctx.fillText("immunity -1! 2 more chances!!" , 32, 32);
-        
+        count++;      
         alert("You have caught Virus! Game Over!")
         gameOver=true;  
-
-        //console.log("touched");
     }
     // console.log("left | right : " + left + " | " + right);
     // console.log("up | down : " + up + " | " + down);
@@ -254,15 +246,17 @@ var update = function (modifier) {
 
 var main = function () {
     var now = Date.now();
-    var delta = now - then;
-    update(delta / 1000);
-    render();
-    then = now;
-    //  Request to do this again ASAP
-    requestAnimationFrame(main);
+    var delta = now - then;   
+        update(delta / 1000);
+        render();
+        then = now;
+        //  Request to do this again ASAP
+        requestAnimationFrame(main);   
+  
 };
 //moving virus on screen every second
 setInterval(displayVirus, 1000);
+
 
 // Draw everything in the main render function
 var render = function () {
@@ -274,7 +268,6 @@ var render = function () {
     if (bgReady2) {
         // console.log('here2');
         ctx.drawImage(bgImage2, 32, 32);
-
     }
 
     if(heroReady){
@@ -302,10 +295,22 @@ var render = function () {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         ctx.fillText("Your Immunity Level: " + immunityLevel, 0, 0);
+        // ctx.fillText("Time:"+Date.now(),700,0);
     
-
 }
 
+
+function endGame(){
+    alert("Time Up! You lost!");
+    alert("Your gained : "+immunityLevel);
+    // let again=prompt("Do you  want to play again? Type 'Y' or 'N'");
+    // if(again=="Y"||again=='y'){
+    // start();  
+    // }
+    // else{
+    //    gameOver=true;
+    // }
+}
 var reset = function () {
     hero.x = (canvas.width / 2)-32;
     hero.y = (canvas.height / 2)-32;
@@ -349,7 +354,7 @@ function displayVirus(){
         {
             virus.x=32+ (Math.random() * (canvas.width - 128));
             virus.y=32+ (Math.random() * (canvas.width - 128));
-            if(!touchingOther(hero,virus)){
+            if(!touchingOther(hero,virus)&&!touchingOther(mask,virus)&&!touchingOther(vaccine,virus)){
                 virusArray.push(new virusObject(virus.x,virus.y));
             }
             
@@ -370,7 +375,18 @@ function touchingOther(who,whom){
         return false;
     }
 }
-
-var then = Date.now();
-reset();
-main();  // call the main game loop.
+// let gametimer;
+ let then;
+function start(){
+    then = Date.now();
+    alert("You have 30 seconds to gain improve your immunity to 10 without contracting Virus!")
+    immunityLevel=0;
+    //var start=Date.now();
+    reset();
+    main();  // call the main game loop.
+    setTimeout(endGame,30000);
+}
+ start();
+// var then=Date.now();
+// reset();
+//  main();  // call the main game loop.
