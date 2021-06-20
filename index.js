@@ -31,6 +31,8 @@ let down = false;
 // for slowing animation in update()
 let counter = 1;
 
+let gameOver = false;
+
 
 // Create the canvas
 var canvas = document.createElement("canvas");
@@ -204,38 +206,48 @@ var update = function (modifier) {
         scrY = 0 * height;
     }
     
-    // Are they touching?
-    if (
-        (hero.x <= (vaccine.x + 45)
-        && vaccine.x <= (hero.x + 45)
-        && hero.y <= (vaccine.y + 45)
-        && vaccine.y <= (hero.y + 45)) ||
-        (hero.x <= (mask.x + 50)
-        && mask.x <= (hero.x + 50)
-        && hero.y <= (mask.y + 50)
-        && mask.y <= (hero.y + 50)) 
-    ) {
-        ++immunityLevel;       // keep track of our “score”
+    // check time 30 seconds
+    if (sw.elapsedTime() < 31){
+        // Are they touching?
+        if (
+            (hero.x <= (vaccine.x + 45)
+            && vaccine.x <= (hero.x + 45)
+            && hero.y <= (vaccine.y + 45)
+            && vaccine.y <= (hero.y + 45)) ||
+            (hero.x <= (mask.x + 50)
+            && mask.x <= (hero.x + 50)
+            && hero.y <= (mask.y + 50)
+            && mask.y <= (hero.y + 50)) 
+        ) {
+            ++immunityLevel;       // keep track of our “score”
+    
+            if(immunityLevel>9){
+                gameOver=true;
+                endGame();
+                //alert("You won!");
 
-        if(immunityLevel>9){
-            alert("You won!");
-            gameOver=true;
-            //clearInterval(gametimer);
-            //endGame();
-        }
-        else{
-            reset();       // start a new cycle
+                //clearInterval(gametimer);
+                //endGame();
+            }
+            else{
+                reset();       // start a new cycle
+            }
         }
     }
+    else {
+        gameOver = true;
+        endGame();
+        //alert("Time Up! You lost!");
+    }
+
 
     let count=0;
     if(touchingVirus(hero)){
         count++;      
         alert("You have caught Virus! Game Over!")
         gameOver=true;  
+        endGame();
     }
-    // console.log("left | right : " + left + " | " + right);
-    // console.log("up | down : " + up + " | " + down);
 };
 
 
@@ -251,8 +263,9 @@ var main = function () {
         render();
         then = now;
         //  Request to do this again ASAP
-        requestAnimationFrame(main);   
-  
+        if(!gameOver){
+            requestAnimationFrame(main);  
+        }
 };
 //moving virus on screen every second
 setInterval(displayVirus, 1000);
@@ -294,23 +307,37 @@ var render = function () {
         ctx.font = "24px Helvetica";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.fillText("Your Immunity Level: " + immunityLevel, 0, 0);
-        // ctx.fillText("Time:"+Date.now(),700,0);
+        ctx.fillText("Your Immunity Level: " + immunityLevel + " | " + "Time: " + sw.elapsedTime(), 0, 0);
+        //ctx.fillText("Your Immunity Level: " + immunityLevel, 0, 0);
+        //ctx.fillText("Time:"+Date.now(),700,0);
     
 }
 
-
 function endGame(){
-    alert("Time Up! You lost!");
-    alert("Your gained : "+immunityLevel);
-    // let again=prompt("Do you  want to play again? Type 'Y' or 'N'");
-    // if(again=="Y"||again=='y'){
-    // start();  
-    // }
-    // else{
-    //    gameOver=true;
-    // }
+    if(immunityLevel > 9 && sw.elapsedTime() < 31){
+        alert("You won!");
+    }
+
+    if(sw.elapsedTime() > 30){
+        alert("Time Up! You lost!");
+    }
+
+    let again=prompt("Do you  want to play again? Type 'Y' or 'N'");
+    if(again=="Y"||again=='y'){
+        sw.stop();
+        sw.reset();
+        gameOver = false;
+        reset();
+        start();  
+    }
+    else {
+        gameOver = true;
+        alert("See you next time!");
+    }
+
+
 }
+
 var reset = function () {
     hero.x = (canvas.width / 2)-32;
     hero.y = (canvas.height / 2)-32;
@@ -376,15 +403,83 @@ function touchingOther(who,whom){
     }
 }
 // let gametimer;
- let then;
+
+function StopWatch() {
+    let startTime,
+        endTime,
+        isRunning = false,
+        time,
+        duration = 0;
+    
+    this.start = function () {
+        if (isRunning) throw new Error("StopWatch has already been started.");
+
+        isRunning = true;
+
+        startTime = new Date();
+    };
+    
+    this.stop = function () {
+        if (!isRunning) throw new Error("StopWatch has already been stop.");
+    
+        isRunning = false;
+    
+        endTime = new Date();
+    
+        const seconds = (endTime.getTime() - startTime.getTime()) / 1000;
+        duration += seconds;
+    };
+    
+    this.reset = function () {
+        duration = 0;
+        startTime = null;
+        endTime = null;
+        isRunning = false;
+    };
+
+    this.elapsedTime = function(){
+        time = new Date();
+        // use getTime() instead of getSeconds because it will produce a negative value
+        return (time.getTime() - startTime.getTime()) / 1000;
+    }
+
+    this.restart = function(){
+        this.stop();
+        this.reset();
+        this.start();
+    }
+    
+    Object.defineProperty(this, "duration", {
+        get: function () {
+            return duration;
+        },
+    });
+}
+    
+const sw = new StopWatch();
+
+let then;
 function start(){
+
+    sw.start();
+    console.log("isRunning : " + sw.isRunning);
+    // if(!sw.isRunning){
+    //     sw.start();
+    // }
+    // else {
+    //     sw.restart();
+    // }
+    // console.log("duration : " + sw.duration);
+    
+
+
     then = Date.now();
     alert("You have 30 seconds to gain improve your immunity to 10 without contracting Virus!")
     immunityLevel=0;
     //var start=Date.now();
     reset();
     main();  // call the main game loop.
-    setTimeout(endGame,30000);
+    //setTimeout(endGame,30000); // 30 seconds
 }
  start();
 // var then=Date.now();
