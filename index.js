@@ -147,27 +147,45 @@ function touchingVirus(who){
 
 // Update game objects
 var update = function (modifier) {
+
+    console.log("in the update() start...");
+    console.log("hero.x = " + hero.x );
+    console.log("hero.y = " + hero.y );
     // clear the last image position and assume the character is not moving left or right
     ctx.clearRect(hero.x, hero.y, width, height);
+
+    console.log("in the update() after clearRect...");
+    console.log("hero.x = " + hero.x );
+    console.log("hero.y = " + hero.y );
+
     left = false;
     right = false;
     up = false;
     down = false;
 
+    // there is a bug when starting game over. hero.y value is modified here even when button is not pressed
     if (38 in keysDown && hero.y > 20) { //  holding up key
+        console.log("up ---> hero.y = " + hero.y)
         hero.y -= hero.speed * modifier;
+        console.log("up +++> hero.y = " + hero.y)
         up = true;
     }
     if (40 in keysDown && hero.y < canvas.height - (64 + 30)) { //  holding down key
+        console.log("down ---> hero.y = " + hero.y)
         hero.y += hero.speed * modifier;
+        console.log("down +++> hero.y = " + hero.y)
         down = true;
     }
     if (37 in keysDown && hero.x > (15)) { // holding left key
+        console.log("left ---> hero.x = " + hero.x)
         hero.x -= hero.speed * modifier;
+        console.log("left +++> hero.x = " + hero.x)
         left = true; // for animation
     }
     if (39 in keysDown && hero.x < canvas.width - (64 + 18)) { // holding right key
+        console.log("right ---> hero.x = " + hero.x)
         hero.x += hero.speed * modifier;
+        console.log("right +++> hero.x = " + hero.x)
         right = true; // for animation
     }
 
@@ -205,6 +223,10 @@ var update = function (modifier) {
         srcX = 0 * width;
         scrY = 0 * height;
     }
+
+    console.log("in the update() end...");
+    console.log("hero.x = " + hero.x );
+    console.log("hero.y = " + hero.y );
     
     // check time 30 seconds
     if (sw.elapsedTime() < 31){
@@ -230,6 +252,7 @@ var update = function (modifier) {
                 //endGame();
             }
             else{
+                console.log("in the update() for reset()");
                 reset();       // start a new cycle
             }
         }
@@ -327,15 +350,16 @@ function endGame(){
         sw.stop();
         sw.reset();
         gameOver = false;
+        console.log("reset() in endGame()");
         reset();
+        console.log("hero.x = " + hero.x);
+        console.log("hero.y = " + hero.y);
         start();  
     }
     else {
         gameOver = true;
         alert("See you next time!");
     }
-
-
 }
 
 var reset = function () {
@@ -478,6 +502,9 @@ function start(){
     immunityLevel=0;
     //var start=Date.now();
     reset();
+    console.log("in the start()...");
+    console.log("hero.x = " + hero.x);
+    console.log("hero.y = " + hero.y);
     main();  // call the main game loop.
     //setTimeout(endGame,30000); // 30 seconds
 }
